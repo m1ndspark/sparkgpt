@@ -2,12 +2,12 @@ from fastapi import FastAPI, Query
 from fastapi.responses import PlainTextResponse
 from typing import Dict
 import os
-from openai import OpenAI
+import openai
 
 app = FastAPI(title="SparkGPT SEO Engine")
 
-# Initialize OpenAI client securely with environment key
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Load the OpenAI API key securely from environment variables
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 @app.get("/")
@@ -67,11 +67,9 @@ def generate_content(
     Generates SEO-optimized content using OpenAI GPT based on Google's
     content quality and E-E-A-T guidelines. Supports multiple content types.
     """
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
+    if not openai.api_key:
         return {"error": "Missing OpenAI API key. Add OPENAI_API_KEY in your environment variables."}
 
-    # Build prompt dynamically
     prompt = f"""
     You are an SEO expert content writer.
     Generate a high-quality {content_type} for the topic "{keyword}".
@@ -80,17 +78,17 @@ def generate_content(
     """
 
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a professional SEO strategist and content writer."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=800,
+            max_tokens=800
         )
 
-        content = response.choices[0].message.content.strip()
+        content = response.choices[0].message["content"].strip()
 
         return {
             "keyword": keyword,
